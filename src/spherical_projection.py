@@ -58,19 +58,22 @@ for x in range(0,img_w):
         lng = math.pi * xx;
         lat = 0.5 * math.pi * yy;
 
-
+        # Compute cartesian coordinates of the sphere surface
         X = math.cos(lat) * math.cos(lng + math.pi*0.5);
         Y = math.cos(lat) * math.sin(lng + math.pi*0.5);
         Z = math.sin(lat);
 
-        #X, Y, Z = Rx((X,Y,Z), math.pi*0.5)
-        X, Y, Z = Ry((X,Y,Z), math.pi*0.25)
-        X, Y, Z = Rz((X,Y,Z), math.pi*0.5)
+        # Perform rotations
+        X, Y, Z = Rx((X,Y,Z), math.pi*0.5)
+        #X, Y, Z = Ry((X,Y,Z), math.pi*0.25)
+        #X, Y, Z = Rz((X,Y,Z), math.pi*0.5)
 
+        # Compute the latitude and longitude of the rotated points
         D = math.sqrt(X*X + Y*Y);
         lat = math.atan2(Z, D);
         lng = math.atan2(Y, X);
 
+        # Transform lat long to plane coordinates
         ix = (0.5 * lng / math.pi + 0.5) * img_w - 0.5;
         iy = (lat /math. pi + 0.5) * img_h - 0.5;
 
