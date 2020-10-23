@@ -26,20 +26,38 @@ def Rz(p, angle):
     Z = z
     return (X,Y,Z)
 
+def get_interpolated_color_easy(img, y, x):
+    if x >= img.shape[1]-2 or y >= img.shape[0]-2:
+        return img[int(y),int(x)]
+    else:
+        v0 = img[math.floor(y), math.floor(x)]
+        v1 = img[math.ceil(y), math.ceil(x)]
+
+        color = np.uint8(( v0 + v1) / 2)
+        return color
+
+def get_subpixel(img, y, x):
+    patch = cv2.getRectSubPix(img, (1,1), (x,y))
+    return patch[0][0]
+
 def get_interpolated_color(img, y, x):
     dx0 = math.ceil(x) - x
     dy0 = math.ceil(y) - y
-    x = int(x)
-    y = int(y)
+    x = math.floor(x)
+    y = math.floor(y)
     if x >= img.shape[1]-2 or y >= img.shape[0]-2:
         return img[y,x]
-
 
     d0 = math.sqrt(dx0*dx0 + dy0*dy0)
     d1 = 1 - d0
 
     color = img[y,x] * d0 + img[y+1, x+1] * d1
+
     return np.uint8(color)
+
+
+
+
 
 test_filename = "../data/pano4s.png"
 
@@ -77,9 +95,10 @@ for x in range(0,img_w):
         ix = (0.5 * lng / math.pi + 0.5) * img_w - 0.5;
         iy = (lat /math. pi + 0.5) * img_h - 0.5;
 
-        trans[int(y), int((x + img_w / 4) % img_w)] = img[int(iy), int(ix)];
-        #trans[int(y), int((x + img_w / 4) % img_w)] = get_interpolated_color(img, iy, ix)
+        trans[int(y), int((x + img_w / 4) % img_w)] = get_subpixel(img, iy, ix)
 
+img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+trans = cv2.resize(trans, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
 cv2.imshow('img', img)
 cv2.imshow('trans', trans)
 cv2.waitKey(0)
