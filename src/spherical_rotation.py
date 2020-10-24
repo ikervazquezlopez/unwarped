@@ -38,21 +38,7 @@ def get_subpixel(img, y, x):
     patch = cv2.getRectSubPix(img, (1,1), (x,y))
     return patch[0][0]
 
-
-
-
-if __name__ == '__main__':
-
-    filename = sys.argv[1]
-    in_dir = sys.argv[2]
-    out_dir = sys.argv[3]
-
-    rx = sys.argv[4]
-    ry = sys.argv[5]
-    rz = sys.argv[6]
-
-    img = cv2.imread(join(in_dir, filename))
-
+def spherical_rotation(img, rx, ry, rz):
     img_w = img.shape[1]
     img_h = img.shape[0]
 
@@ -86,15 +72,25 @@ if __name__ == '__main__':
             iy = (lat /math. pi + 0.5) * img_h - 0.5;
 
             trans[int(y), int((x + img_w / 4) % img_w)] = get_subpixel(img, iy, ix)
+    return trans
 
-    name = filename.split(".")[0]
-    filename = "{}_{}_{}_{}.png".format(name,rx, ry, rz)
+
+
+if __name__ == '__main__':
+
+    filename = sys.argv[1]
+
+    rx = sys.argv[2]
+    ry = sys.argv[3]
+    rz = sys.argv[4]
+
+    in_dir = sys.argv[5]
+    out_dir = sys.argv[6]
+
+    img = cv2.imread(join(in_dir, filename))
+    trans = spherical_rotation(img, rx, ry, rz)
 
     # Save image
-    cv2.imwrite(join(out_dir, filename), trans)
-
-    # Write data into the csv
-    with open(filename_csv, newline='', mode='a') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([filename, rx, ry, rz])
-    csvfile.close()
+    name = filename.split(".")[0]
+    filename = "{}_{}_{}_{}.png".format(name,rx, ry, rz)
+    cv2.imwrite(join(in_dir, filename), trans)
