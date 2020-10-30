@@ -32,19 +32,20 @@ if __name__ == '__main__':
     filename_csv = join(out_dir, "data.csv")
     f = open(filename_csv, 'w', newline='')
     writer = csv.writer(f)
-    writer.writerow(["FILENAME", "RX", "RY", "RZ"])
+    writer.writerow(["FILENAME", "ORIGINAL", "RX", "RY", "RZ"])
 
     # Generate rotation for each image
     for filename in files:
         if filename.endswith(EXTENSIONS):
+            os.system("copy {} {}".format(join(in_dir, filename), join(out_dir, filename)))
             for _ in range(10):
                 rotations = np.random.rand(3)
                 rotations = (rotations * 360) - 180
                 rx, ry, rz = np.uint8(rotations)
-                os.system("python spherical_rotation.py {f} {rx} {ry} {rz} {in_dir} {out_dir} ".format(f=filename,
+                os.system("python spherical_rotation.py {f} {rx} {ry} {rz} {in_dir} {out_dir}".format(f=filename,
                             in_dir=in_dir, out_dir=out_dir, rx=rx, ry=ry, rz=rz))
                 name = filename.split(".")[0]
                 name = "{}_{}_{}_{}.png".format(name, rx, ry, rz)
-                writer.writerow([name, rx, ry, rz])
+                writer.writerow([name, filename, rx, ry, rz])
 
     f.close()

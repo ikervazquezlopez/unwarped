@@ -103,7 +103,7 @@ def sinusoidal2equirectangular(sin_img):
                 img[y, x] = cv2.getRectSubPix(sin_img, (1,1), (xs,ys))
     return img
 
-
+"""
 lat, lng = equirectangular2latlng(0,25, 100, 100)
 x, y = latlng2sinusoidal(lat, lng, 100, 100)
 print((lat, lng), (x,y))
@@ -136,10 +136,27 @@ cv2.imwrite("equirectangular.png", img)
 
 
 #ref = cv2.imread("sinusoidal.png")
-
+"""
 
 """
 cv2.imshow("test", r)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 """
+
+w = 16
+h = 8
+
+table = np.zeros((h, w, 2), dtype=np.float64)
+
+for y in range(h):
+    for x in range(w):
+        lat, lng = equirectangular2latlng(x, y, w-1, h-1)
+        xs, ys = latlng2sinusoidal(lat,lng, w-1,h-1)
+        table[y, x] = np.array([xs,ys])
+
+from tabulate import tabulate
+table = np.round(table, decimals=2)
+headers = [y in range(h)]
+table = tabulate(table, headers)
+print(table)

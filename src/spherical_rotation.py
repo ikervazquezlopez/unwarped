@@ -93,4 +93,4 @@ if __name__ == '__main__':
     # Save image
     name = filename.split(".")[0]
     filename = "{}_{}_{}_{}.png".format(name,rx, ry, rz)
-    cv2.imwrite(join(in_dir, filename), trans)
+    cv2.imwrite(join(out_dir, filename), trans)
