@@ -8,7 +8,7 @@ import sys
 TO_RADIANS = math.pi / 180
 epsilon = 0.9
 
-
+############## PROJECTION TO LATITUDE AND LONGITUDE ###########################
 def equirectangular2latlng(x, y,  img_w, img_h, lat0=0, lng0=0):
     w = img_w
     h = img_h
@@ -18,6 +18,39 @@ def equirectangular2latlng(x, y,  img_w, img_h, lat0=0, lng0=0):
     lat = yy + lat0
     return (lat, lng)
 
+def sinusoidal2latlng(x, y, lng0, img_w, img_h):
+    w = img_w
+    h = img_h
+    xx = 2*math.pi*x/w - math.pi
+    lat = math.pi*y/h - math.pi/2
+    lng = xx / math.cos(lat) + lng0
+    return (lat, lng)
+
+def cylindrical2latlng(x, y, img_w, img_h, lng0=0):
+    w = img_w
+    h = img_h
+    xx = 2*math.pi*x/w - math.pi
+    yy = math.pi*y/h - math.pi/2
+    lat = math.atan(yy)
+    lng = xx + lng0
+    return (lat, lng)
+
+def image2latlong(x, y, img_w, img_h):
+    lng = x*2*math.pi/img_w - math.pi
+    lat = y*math.pi/img_h - math.pi/2
+    return (lat, lng)
+
+"""
+def cartesian2latlng(x, y, z):
+    D = math.sqrt(x*x + y*y)
+    lat = math.atan2(z, D)
+    lng = math.atan2(y, x)
+    return (lat, lng)
+"""
+
+
+
+############## LATITUDE AND LONGITUDE TO PROJECTION ###########################
 def latlng2equirectangular(lat, lng, img_w, img_h, lat0=0, lng0=0):
     w = img_w
     h = img_h
@@ -36,37 +69,28 @@ def latlng2sinusoidal(lat,lng, img_w, img_h, lng0=0):
     y = h * (yy+math.pi/2) / math.pi
     return (x, y)
 
-def sinusoidal2latlng(x, y, lng0, img_w, img_h):
+def latlng2cylindrical(lat, lng, img_w, img_h, lng0=0):
     w = img_w
     h = img_h
-    xx = 2*math.pi*x/w - math.pi
-    lat = math.pi*y/h - math.pi/2
-    lng = xx / math.cos(lat) + lng0
-    return (lat, lng)
+    xx = lng - lng0
+    yy = math.atan2(lat,xx)
+    x = w * (xx+math.pi) / (2*math.pi)
+    y = h * (yy+math.pi/2) / math.pi
+    print((lat,lng), (x,y))
+    return (x, y)
 
-
-
+"""
 def latlng2cartesian(lat, lng):
     x = math.cos(lat) * math.cos(lng + math.pi*0.5)
     y = math.cos(lat) * math.sin(lng + math.pi*0.5)
     z = math.sin(lat)
     return (x, y, z)
-
-
-def image2latlong(x, y, img_w, img_h):
-    lng = x*2*math.pi/img_w - math.pi
-    lat = y*math.pi/img_h - math.pi/2
-    return (lat, lng)
-
-def cartesian2latlng(x, y, z):
-    D = math.sqrt(x*x + y*y)
-    lat = math.atan2(z, D)
-    lng = math.atan2(y, x)
-    return (lat, lng)
+"""
 
 
 
 
+############## PROJECTION TO PROJECTION ########################################
 def equirectangular2sinusoidal(equi_img):
     img = np.zeros_like(equi_img)
     img_h, img_w, _ = img.shape
@@ -103,47 +127,52 @@ def sinusoidal2equirectangular(sin_img):
                 img[y, x] = cv2.getRectSubPix(sin_img, (1,1), (xs,ys))
     return img
 
-"""
-lat, lng = equirectangular2latlng(0,25, 100, 100)
-x, y = latlng2sinusoidal(lat, lng, 100, 100)
-print((lat, lng), (x,y))
+def equirectangular2cylindrical(equi_img):
+    img = np.zeros_like(equi_img)
+    img_h, img_w, _ = img.shape
+    for x in range(0,img_w):
+        for y in range(0,img_h):
+            lat, lng = cylindrical2latlng(x, y, img_w, img_h)
+            xs, ys = latlng2equirectangular(lat, lng, img_w, img_h)
+            if xs-math.floor(xs)==0 and ys-math.floor(ys)==0:
+                img[y,x] = equi_img[int(ys), int(xs)]
+            else:
+                img[y, x] = cv2.getRectSubPix(equi_img, (1,1), (xs,ys))
+    return img
 
-#lat = math.pi /2
-#lng = math.pi/4
-lng0 = math.pi/2
+def cylindrical2equirectangular(cyl_img):
+    img = np.zeros_like(cyl_img)
+    img_h, img_w, _ = img.shape
+    for x in range(0,img_w):
+        for y in range(0,img_h):
+            lat, lng = equirectangular2latlng(x, y, img_w, img_h)
+            xs, ys = latlng2cylindrical(lat, lng, img_w, img_h)
+            if xs-math.floor(xs)==0 and ys-math.floor(ys)==0:
+                img[y,x] = cyl_img[int(ys), int(xs)]
+            else:
+                img[y, x] = cv2.getRectSubPix(cyl_img, (1,1), (xs,ys))
+    return img
 
-img_w = 100
-img_h = 100
+
+
 
 ref = cv2.imread("../data/pano4s.png")
 #ref = cv2.imread("equirectangular.png")
 #ref = cv2.imread("sinusoidal.png")
 #img = np.zeros((img_h,img_w), dtype = np.uint8)
 img = np.zeros_like(ref)
-
 img_h, img_w, _ = img.shape
+img = equirectangular2cylindrical(ref)
+img = cylindrical2equirectangular(img)
 
-img = equirectangular2sinusoidal(ref)
-cv2.imwrite("sinusoidal.png", img)
-img = sinusoidal2equirectangular(img)
-img = equirectangular2sinusoidal(ref)
-cv2.imwrite("sinusoidal.png", img)
-img = sinusoidal2equirectangular(img)
-PSNR = cv2.PSNR(ref, img)
-print(PSNR)
-
-cv2.imwrite("equirectangular.png", img)
-
-
-#ref = cv2.imread("sinusoidal.png")
-"""
-
-"""
-cv2.imshow("test", r)
+cv2.imshow("test", img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-"""
 
+
+
+
+"""
 w = 16
 h = 8
 
@@ -160,3 +189,4 @@ table = np.round(table, decimals=2)
 headers = [y in range(h)]
 table = tabulate(table, headers)
 print(table)
+"""

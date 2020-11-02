@@ -72,8 +72,6 @@ class ToTensor(object):
 
 
 ### ==================== TEST FUCTION ==================================
-
-
 mydataset = SphericalRotationDataset(csv_file='../data/data.csv',
                                     root_dir='../data/',
                                     transform=transforms.Compose([
