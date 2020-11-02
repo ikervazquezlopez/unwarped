@@ -60,9 +60,10 @@ class ToTensor(object):
         # torch image: C X H X W
         rotated_img = rotated_img.transpose((2, 0, 1))
         original_img = original_img.transpose((2, 0, 1))
-        return {'rotated_img': torch.from_numpy(rotated_img),
-                'original_img': torch.from_numpy(original_img),
-                'y': torch.from_numpy(y)}
+        y = torch.from_numpy(y)
+        return {'rotated_img':  torch.from_numpy(original_img),
+                'original_img':  torch.from_numpy(rotated_img),
+                'y': torch.squeeze(y)}
 
 
 
